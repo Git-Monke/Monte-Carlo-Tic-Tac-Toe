@@ -1,40 +1,70 @@
-mod ttt;
+pub mod ttt;
 
-use std::io;
-use ttt::{Board, MoveResult};
+use ttt::{Board, GameState, MoveResult, GameState::*};
 
-pub fn main() {
-    let mut board = Board::new();
-    let mut player: i8 = 1;
-    
-    board.display();
+pub struct StrategicBoard {
+    subboards: Vec<Board>,
+    board: Board,
+    current_board: Option<usize>,
+    player: i8,
+    move_history: Vec<usize>,
+    checkpoint_index: usize
+}
 
-    loop {
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("Failed to read line");
+impl StrategicBoard {
+    pub fn new() -> StrategicBoard {
+        let mut boards: Vec<Board> = vec![];
+        
+        for _ in 0..9 {
+            boards.push(Board::new());
+        }
 
-        let position: usize = match input.trim().parse() {
-            Ok(num) => num,
-            Err(_) => {
-                println!("Invalid input, expected 1-9");
-                return;
+        StrategicBoard {
+            subboards: boards,
+            board: Board::new(),
+            current_board: None,
+            player: 1,
+            move_history: vec![],
+            checkpoint_index: 0,
+        }
+    }
+
+    pub fn make_move(&mut self, subboard: usize, index: usize) -> MoveResult {
+        // Check to make sure they're playing on the right board
+        match self.current_board {
+            Some(b) if b != subboard => {
+                println!("Warning! Tried to play on the wrong board");
+                return MoveResult::Nothing;
             },
-        };
+            _ => ()
+        }
 
-        let result = board.make_move(position - 1, player);
-        board.display();
-        player = -player;
+        // Check to make sure the board is in play
+        match self.subboards[subboard].state {
+            Winner | Draw => {
+                println!("Warning! Tried to play on subboard that has already been completed.");
+                return MoveResult::Nothing;
+            },
+            InPlay => ()
+        }
+
+        // Check to make sure the spot they want to play on  is empty
+        if self.subboards[subboard].board[index] != 0 {
+            println!("Warning! Tried to play on a spot that has already been played on.");
+            return MoveResult::Nothing
+        }
+
+        let result = self.subboards[subboard].make_move(index, self.player);
+        self.player = -self.player;
 
         match result {
             MoveResult::PlayerWon(p) => {
-                println!("Winner is player {}", match board.winner { 1 => 1, -1 => 2, _ => 0 });
-                break;
-            }
+                self.board.make_move(subboard, p)
+            },
             MoveResult::Draw => {
-                println!("Game is a draw!");
-                break;
+                self.board.make_move(subboard, 2)
             }
-            MoveResult::Nothing => ()
+            _ => MoveResult::Nothing
         }
     }
 }
