@@ -14,7 +14,7 @@ pub struct Board {
     pub board: [i8; 9],
     pub winner: i8,
     pub state: GameState,
-    pub move_history: Vec<usize>
+    pub move_history: Vec<usize>,
 }
 
 impl Board {
@@ -23,7 +23,7 @@ impl Board {
             board: [0; 9],
             winner: 0,
             state: GameState::InPlay,
-            move_history: vec![]
+            move_history: vec![],
         }
     }
 
@@ -77,14 +77,20 @@ impl Board {
 
         // Horizontal Checks
         for index in 0..=2 {
-            if board[index] == board[index + 3] && board[index + 3] == board[index + 6] && board[0] != 2 {
+            if board[index] == board[index + 3]
+                && board[index + 3] == board[index + 6]
+                && board[0] != 2
+            {
                 self.winner = board[index];
             }
         }
 
         // Vertical Checks
         for index in (0..=6).step_by(3) {
-            if board[index] == board[index + 1] && board[index + 1] == board[index + 2] && board[0] != 2 {
+            if board[index] == board[index + 1]
+                && board[index + 1] == board[index + 2]
+                && board[0] != 2
+            {
                 self.winner = board[index];
             }
         }
@@ -103,28 +109,28 @@ impl Board {
         MoveResult::Nothing
     }
 
-    pub fn display(&self) {
-        println!(
-            " {} | {} | {}",
-            match_token(self.board[0]),
-            match_token(self.board[1]),
-            match_token(self.board[2])
-        );
-        println!("---+---+---");
-        println!(
-            " {} | {} | {}",
-            match_token(self.board[3]),
-            match_token(self.board[4]),
-            match_token(self.board[5])
-        );
-        println!("---+---+---");
-        println!(
-            " {} | {} | {}",
-            match_token(self.board[6]),
-            match_token(self.board[7]),
-            match_token(self.board[8])
-        );
-    }
+    // pub fn display(&self) {
+    //     println!(
+    //         " {} | {} | {}",
+    //         match_token(self.board[0]),
+    //         match_token(self.board[1]),
+    //         match_token(self.board[2])
+    //     );
+    //     println!("---+---+---");
+    //     println!(
+    //         " {} | {} | {}",
+    //         match_token(self.board[3]),
+    //         match_token(self.board[4]),
+    //         match_token(self.board[5])
+    //     );
+    //     println!("---+---+---");
+    //     println!(
+    //         " {} | {} | {}",
+    //         match_token(self.board[6]),
+    //         match_token(self.board[7]),
+    //         match_token(self.board[8])
+    //     );
+    // }
 }
 
 fn match_token(token: i8) -> &'static str {

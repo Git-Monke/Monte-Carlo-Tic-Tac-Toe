@@ -1,6 +1,6 @@
 pub mod ttt;
 
-use ttt::{Board, GameState, MoveResult, GameState::*};
+use ttt::{Board, GameState, GameState::*, MoveResult};
 
 pub struct StrategicBoard {
     subboards: Vec<Board>,
@@ -8,13 +8,13 @@ pub struct StrategicBoard {
     current_board: Option<usize>,
     player: i8,
     move_history: Vec<usize>,
-    checkpoint_index: usize
+    checkpoint_index: usize,
 }
 
 impl StrategicBoard {
     pub fn new() -> StrategicBoard {
         let mut boards: Vec<Board> = vec![];
-        
+
         for _ in 0..9 {
             boards.push(Board::new());
         }
@@ -35,8 +35,8 @@ impl StrategicBoard {
             Some(b) if b != subboard => {
                 println!("Warning! Tried to play on the wrong board");
                 return MoveResult::Nothing;
-            },
-            _ => ()
+            }
+            _ => (),
         }
 
         // Check to make sure the board is in play
@@ -44,27 +44,59 @@ impl StrategicBoard {
             Winner | Draw => {
                 println!("Warning! Tried to play on subboard that has already been completed.");
                 return MoveResult::Nothing;
-            },
-            InPlay => ()
+            }
+            InPlay => (),
         }
 
         // Check to make sure the spot they want to play on  is empty
         if self.subboards[subboard].board[index] != 0 {
             println!("Warning! Tried to play on a spot that has already been played on.");
-            return MoveResult::Nothing
+            return MoveResult::Nothing;
         }
 
         let result = self.subboards[subboard].make_move(index, self.player);
         self.player = -self.player;
 
+        self.current_board = match self.subboards[index].state {
+            GameState::Winner | GameState::Draw => None,
+            _ => Some(index),
+        };
+
         match result {
-            MoveResult::PlayerWon(p) => {
-                self.board.make_move(subboard, p)
-            },
-            MoveResult::Draw => {
-                self.board.make_move(subboard, 2)
-            }
-            _ => MoveResult::Nothing
+            MoveResult::PlayerWon(p) => self.board.make_move(subboard, p),
+            MoveResult::Draw => self.board.make_move(subboard, 2),
+            _ => MoveResult::Nothing,
         }
+    }
+
+    // Horrendous I know... but it works.
+    pub fn display(&self) {
+        for i in (0..=6).step_by(3) {
+            for j in (0..=3).step_by(3) {
+                println!(
+                    " {}{}{} | {}{}{} | {}{}{} ",
+                    match_token(self.subboards[i].board[j]),
+                    match_token(self.subboards[i].board[j + 1]),
+                    match_token(self.subboards[i].board[j + 2]),
+                    match_token(self.subboards[i + 1].board[j]),
+                    match_token(self.subboards[i + 1].board[j + 1]),
+                    match_token(self.subboards[i + 1].board[j + 2]),
+                    match_token(self.subboards[i + 2].board[j]),
+                    match_token(self.subboards[i + 2].board[j + 1]),
+                    match_token(self.subboards[i + 2].board[j + 2])
+                );
+            }
+            if i < 6 {
+                println!("-----+-----+-----")
+            }
+        }
+    }
+}
+
+fn match_token(token: i8) -> &'static str {
+    match token {
+        1 => "X",
+        -1 => "O",
+        _ => ".",
     }
 }
