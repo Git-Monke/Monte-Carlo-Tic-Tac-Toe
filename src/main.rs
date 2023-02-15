@@ -22,6 +22,7 @@ fn read(prompt: &str) -> usize {
 
 fn main() {
     let mut new_board = StrategicBoard::new();
+    new_board.display();
 
     loop {
         let subboard = match new_board.current_board {

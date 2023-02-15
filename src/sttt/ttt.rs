@@ -68,21 +68,20 @@ impl Board {
         let board = self.board;
         
         // Diagonal Checks
-        if board[0] == board[4] && board[4] == board[8] && board[0] != 2 {
+        if board[0] == board[4] && board[4] == board[8] && board[0] != 2 && board[0] != 0 {
             self.winner = board[0];
         }
 
-        if board[2] == board[4] && board[4] == board[6] && board[0] != 2 {
+        if board[2] == board[4] && board[4] == board[6] && board[0] != 2 && board[0] != 0 {
             self.winner = board[2];
         }
 
         // Horizontal Checks
         for index in 0..=2 {
-            println!("Checking the horizontals");
-            println!("{} {} {}", board[index], board[index + 3], board[index + 6]);
             if board[index] == board[index + 3]
                 && board[index] == board[index + 6]
                 && board[index] != 2
+                && board[index] != 0
             {
                 self.winner = board[index];
             }
@@ -93,6 +92,7 @@ impl Board {
             if board[index] == board[index + 1]
                 && board[index] == board[index + 2]
                 && board[index] != 2
+                && board[index] != 0
             {
                 self.winner = board[index];
             }
