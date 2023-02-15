@@ -2,12 +2,17 @@ pub mod ttt;
 
 use ttt::{Board, GameState, GameState::*, MoveResult};
 
+pub struct Move {
+    subboard: usize,
+    index: usize
+}
+
 pub struct StrategicBoard {
     subboards: Vec<Board>,
     board: Board,
     pub current_board: Option<usize>,
     pub player: i8,
-    move_history: Vec<usize>,
+    move_history: Vec<Move>,
     checkpoint_index: usize,
 }
 
@@ -50,6 +55,10 @@ impl StrategicBoard {
 
         let result = self.subboards[subboard].make_move(index, self.player);
         self.player = -self.player;
+        self.move_history.push(Move {
+            subboard: subboard,
+            index: index
+        });
         
         self.current_board = match self.subboards[index].state {
             GameState::Winner | GameState::Draw => None,
@@ -60,6 +69,47 @@ impl StrategicBoard {
             MoveResult::PlayerWon(p) => self.board.make_move(subboard, p),
             MoveResult::Draw => self.board.make_move(subboard, 2),
             _ => MoveResult::Nothing,
+        }
+    }
+
+    pub fn get_legal_moves(&self) -> Vec<Move> {
+        let moves = vec![];
+
+        let subboards = if let Some(n) = self.current_board {
+            vec![n]
+        } else {
+            self.subboards
+                .iter()
+                .enumerate()
+                .filter_map(|(i, board)| if board.state == InPlay { Some(i) } else { None })
+                .collect()
+        };
+
+        for (i, board) in subboards.iter().enumerate() {
+            let current_board = self.current_board.unwrap();
+
+            let sub_moves = self.subboards[current_board].get_legal_moves();
+            for mov in sub_moves {
+                moves.push(Move {
+                    subboard: current_board,
+                    index: mov
+                })
+            }
+        }
+
+        moves
+    }
+
+    pub fn set_checkpoint(&mut self) {
+        self.checkpoint_index = self.move_history.len();
+    }
+
+    pub fn revert(&mut self) {
+        while self.move_history.len() != self.checkpoint_index && self.move_history.len() > 0 {
+            let mov = self.move_history.last().unwrap();
+            self.subboards[mov.subboard].board[mov.index] = 0;
+            self.subboards[mov.subboard].state = GameState::InPlay;
+            self.move_history.pop();
         }
     }
 

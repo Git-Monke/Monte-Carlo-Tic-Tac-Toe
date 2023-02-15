@@ -16,7 +16,7 @@ fn read(prompt: &str) -> usize {
         _ => {
             println!("Invalid input. Please enter a number between 1 and 9.");
             0
-        }
+                }
     }
 }
 

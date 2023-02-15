@@ -12,7 +12,7 @@ pub struct Node<T> {
 }
 
 impl Node {
-    pub fn new(parent: Option<Box<Node>>) -> Node<T> {
+    pub fn new(parent: Option<Box<Node>>) -> Node {
         Node {
             parent: parent,
             leaves: vec![],
@@ -38,5 +38,15 @@ impl Node {
         }
 
         (self.value / self.visits) + (exploration_constant * (self.parent.visits / self.visits).sqrt())
+    }
+
+    pub fn new_child<T>(&mut self, value: T) -> Node {
+        Node {
+            parent: Box::new(self),
+            children: vec![],
+            node_data: value,
+            value: 0.0,
+            visits: 0.0
+        }
     }
 }

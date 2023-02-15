@@ -3,6 +3,18 @@ pub enum MoveResult {
     Draw,
     Nothing,
 }
+#[derive(Debug)]
+pub enum GameState {
+    Winner,
+    Draw,
+    InPlay,
+}
+
+impl PartialEq for GameState {
+    fn eq(&self, other: &Self) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
+    }
+}
 
 pub struct Move {
     subboard: usize,
@@ -10,12 +22,6 @@ pub struct Move {
     result_state: GameState
 }
 
-#[derive(Debug)]
-pub enum GameState {
-    Winner,
-    Draw,
-    InPlay,
-}
 
 pub struct Board {
     pub board: [i8; 9],
