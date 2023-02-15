@@ -5,27 +5,21 @@ use ttt::{Board, GameState, GameState::*, MoveResult};
 pub struct StrategicBoard {
     subboards: Vec<Board>,
     board: Board,
-    current_board: Option<usize>,
-    player: i8,
+    pub current_board: Option<usize>,
+    pub player: i8,
     move_history: Vec<usize>,
     checkpoint_index: usize,
 }
 
 impl StrategicBoard {
     pub fn new() -> StrategicBoard {
-        let mut boards: Vec<Board> = vec![];
-
-        for _ in 0..9 {
-            boards.push(Board::new());
-        }
-
         StrategicBoard {
-            subboards: boards,
+            subboards: (0..9).map(|_| Board::new()).collect(),
             board: Board::new(),
             current_board: None,
             player: 1,
             move_history: vec![],
-            checkpoint_index: 0,
+            checkpoint_index: 0
         }
     }
 
@@ -56,7 +50,7 @@ impl StrategicBoard {
 
         let result = self.subboards[subboard].make_move(index, self.player);
         self.player = -self.player;
-
+        
         self.current_board = match self.subboards[index].state {
             GameState::Winner | GameState::Draw => None,
             _ => Some(index),
@@ -72,7 +66,7 @@ impl StrategicBoard {
     // Horrendous I know... but it works.
     pub fn display(&self) {
         for i in (0..=6).step_by(3) {
-            for j in (0..=3).step_by(3) {
+            for j in (0..=6).step_by(3) {
                 println!(
                     " {}{}{} | {}{}{} | {}{}{} ",
                     match_token(self.subboards[i].board[j]),

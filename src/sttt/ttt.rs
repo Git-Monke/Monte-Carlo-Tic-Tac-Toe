@@ -4,6 +4,7 @@ pub enum MoveResult {
     Nothing,
 }
 
+#[derive(Debug)]
 pub enum GameState {
     Winner,
     Draw,
@@ -65,7 +66,7 @@ impl Board {
 
     fn check_for_win(&mut self) -> MoveResult {
         let board = self.board;
-
+        
         // Diagonal Checks
         if board[0] == board[4] && board[4] == board[8] && board[0] != 2 {
             self.winner = board[0];
@@ -77,9 +78,11 @@ impl Board {
 
         // Horizontal Checks
         for index in 0..=2 {
+            println!("Checking the horizontals");
+            println!("{} {} {}", board[index], board[index + 3], board[index + 6]);
             if board[index] == board[index + 3]
-                && board[index + 3] == board[index + 6]
-                && board[0] != 2
+                && board[index] == board[index + 6]
+                && board[index] != 2
             {
                 self.winner = board[index];
             }
@@ -88,13 +91,13 @@ impl Board {
         // Vertical Checks
         for index in (0..=6).step_by(3) {
             if board[index] == board[index + 1]
-                && board[index + 1] == board[index + 2]
-                && board[0] != 2
+                && board[index] == board[index + 2]
+                && board[index] != 2
             {
                 self.winner = board[index];
             }
         }
-
+        
         if self.winner != 0 {
             self.state = GameState::Winner;
             return MoveResult::PlayerWon(self.winner);
