@@ -4,6 +4,12 @@ pub enum MoveResult {
     Nothing,
 }
 
+pub struct Move {
+    subboard: usize,
+    index: usize,
+    result_state: GameState
+}
+
 #[derive(Debug)]
 pub enum GameState {
     Winner,
