@@ -3,8 +3,9 @@ pub mod ttt;
 use ttt::{Board, GameState, GameState::*, MoveResult};
 use rand::prelude::*;
 
+#[derive(Debug)]
 pub struct StrategicBoard {
-    subboards: Vec<Board>,
+    pub subboards: Vec<Board>,
     board: Board,
     pub legal_boards: Vec<usize>,
     pub current_board: Option<usize>,
@@ -16,8 +17,8 @@ pub struct StrategicBoard {
 
 #[derive(Debug)]
 pub struct Move {
-    subboard: usize,
-    index: usize,
+    pub subboard: usize,
+    pub index: usize,
 }
 
 impl StrategicBoard {
@@ -76,8 +77,8 @@ impl StrategicBoard {
                 }
                 // Update the larger board to track that win, setting it to whoever won or 2 if the game was a draw.
                 self.board.make_move(subboard, p)
-            }
-            _ => MoveResult::Nothing,
+            },
+            _ => MoveResult::Nothing
         }
     }
 
@@ -100,7 +101,7 @@ impl StrategicBoard {
     }
 
     pub fn revert(&mut self) {
-        while self.move_history.len() != self.checkpoint_index && self.move_history.len() > 0 {
+        while self.move_history.len() != self.checkpoint_index && self.move_history.len() >= 0 {
             let index = *self.move_history.last().unwrap();
             let subboard = &mut self.subboards[index];
 

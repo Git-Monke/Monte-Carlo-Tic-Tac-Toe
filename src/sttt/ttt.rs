@@ -1,9 +1,9 @@
 use rand::prelude::*;
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum MoveResult {
     Completed(i8),
-    Nothing,
+    Nothing
 }
 
 #[derive(Debug, PartialEq)]
@@ -12,6 +12,7 @@ pub enum GameState {
     InPlay,
 }
 
+#[derive(Debug)]
 pub struct Board {
     pub board: [i8; 9],
     pub winner: i8,
@@ -34,16 +35,19 @@ impl Board {
     // If player = 2, then that represents a claimed but neutral territory.
     // The purpose of this being to represent draws on bigger boards.
     pub fn make_move(&mut self, index: usize, player: i8) -> MoveResult {
+        println!("{:?}", self);
         if self.winner != 0 {
-            println!("Warning! Tried playing illegal move (Board already has a winner)");
+            self.display();
+            panic!("Warning! Tried playing illegal move (Board already has a winner)");
             return MoveResult::Nothing;
         }
 
         if self.board[index] != 0 {
-            println!("Warning! Tried playing illegal move (Player has already played at position)");
+            self.display();
+            panic!("Warning! Tried playing illegal move (Player has already played at position)");
             return MoveResult::Nothing;
         }
-
+        
         self.board[index] = player;
         self.move_history.push(index);
         self.check_for_win()
@@ -51,6 +55,7 @@ impl Board {
 
     pub fn undo_move(&mut self) {
         self.board[*self.move_history.last().unwrap()] = 0;
+        self.winner = 0;
         self.move_history.pop();
         self.state = GameState::InPlay;
     }
@@ -115,28 +120,28 @@ impl Board {
         MoveResult::Nothing
     }
 
-    // pub fn display(&self) {
-    //     println!(
-    //         " {} | {} | {}",
-    //         match_token(self.board[0]),
-    //         match_token(self.board[1]),
-    //         match_token(self.board[2])
-    //     );
-    //     println!("---+---+---");
-    //     println!(
-    //         " {} | {} | {}",
-    //         match_token(self.board[3]),
-    //         match_token(self.board[4]),
-    //         match_token(self.board[5])
-    //     );
-    //     println!("---+---+---");
-    //     println!(
-    //         " {} | {} | {}",
-    //         match_token(self.board[6]),
-    //         match_token(self.board[7]),
-    //         match_token(self.board[8])
-    //     );
-    // }
+    pub fn display(&self) {
+        println!(
+            " {} | {} | {}",
+            match_token(self.board[0]),
+            match_token(self.board[1]),
+            match_token(self.board[2])
+        );
+        println!("---+---+---");
+        println!(
+            " {} | {} | {}",
+            match_token(self.board[3]),
+            match_token(self.board[4]),
+            match_token(self.board[5])
+        );
+        println!("---+---+---");
+        println!(
+            " {} | {} | {}",
+            match_token(self.board[6]),
+            match_token(self.board[7]),
+            match_token(self.board[8])
+        );
+    }
 }
 
 fn match_token(token: i8) -> &'static str {

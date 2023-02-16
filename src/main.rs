@@ -26,38 +26,58 @@ fn read(prompt: &str) -> usize {
 
 fn main() {
     let mut new_board = StrategicBoard::new();
+    new_board.set_checkpoint();
 
-    for _ in 0..100_000 {
-        new_board.set_checkpoint();
-    }
+    let now = Instant::now();
 
-    new_board.display();
-
-    loop {
-        let subboard = match new_board.current_board {
-            Some(x) => {
-                println!("Currently on board {}", x + 1);
-                x
-            }
-            None => read("Subboard (1-9): ") - 1,
-        };
-        let index = read("Index (1-9): ") - 1;
-
-        let result = new_board.make_move(subboard, index);
+    for _ in 0..100 {
+        new_board.revert();
         new_board.display();
-        println!("{:?}", new_board.get_random_move());
-
-        match result {
-            MoveResult::Completed(p) => {
-                match p {
-                    1 => println!("Player 1 won!"),
-                    -1 => println!("Player 2 won!"),
-                    2 => println!("Game was a draw"),
-                    _ => unreachable!(),
-                };
-                break;
-            }
-            MoveResult::Nothing => (),
+        loop {
+            let new_move = new_board.get_random_move();
+            new_board.display();
+            println!("\n");
+            println!("{:?}", new_move);
+            println!("{:?}", new_board.subboards);  
+            new_board.subboards[new_move.subboard].display(); 
+            let result = new_board.make_move(new_move.subboard, new_move.index);
+            match result {
+                MoveResult::Completed(p) => {
+                    println!("{}", p);
+                    break
+                }
+                _ => ()
+            };
         }
     }
+
+    println!("{:?}", now.elapsed());
+
+    // loop {
+    //     let subboard = match new_board.current_board {
+    //         Some(x) => {
+    //             println!("Currently on board {}", x + 1);
+    //             x
+    //         }
+    //         None => read("Subboard (1-9): ") - 1,
+    //     };
+    //     let index = read("Index (1-9): ") - 1;
+
+    //     let result = new_board.make_move(subboard, index);
+    //     new_board.display();
+    //     println!("{:?}", new_board.get_random_move());
+
+    //     match result {
+    //         MoveResult::Completed(p) => {
+    //             match p {
+    //                 1 => println!("Player 1 won!"),
+    //                 -1 => println!("Player 2 won!"),
+    //                 2 => println!("Game was a draw"),
+    //                 _ => unreachable!(),
+    //             };
+    //             break;
+    //         }
+    //         MoveResult::Nothing => (),
+    //     }
+    // }
 }
