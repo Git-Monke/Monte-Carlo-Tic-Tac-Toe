@@ -1,33 +1,23 @@
+use rand::prelude::*;
+
+#[derive(PartialEq)]
 pub enum MoveResult {
-    PlayerWon(i8),
-    Draw,
+    Completed(i8),
     Nothing,
 }
-#[derive(Debug)]
+
+#[derive(Debug, PartialEq)]
 pub enum GameState {
-    Winner,
-    Draw,
+    Completed,
     InPlay,
 }
-
-impl PartialEq for GameState {
-    fn eq(&self, other: &Self) -> bool {
-        std::mem::discriminant(self) == std::mem::discriminant(other)
-    }
-}
-
-pub struct Move {
-    subboard: usize,
-    index: usize,
-    result_state: GameState
-}
-
 
 pub struct Board {
     pub board: [i8; 9],
     pub winner: i8,
     pub state: GameState,
     pub move_history: Vec<usize>,
+    rng: ThreadRng
 }
 
 impl Board {
@@ -37,6 +27,7 @@ impl Board {
             winner: 0,
             state: GameState::InPlay,
             move_history: vec![],
+            rng: rand::thread_rng()
         }
     }
 
@@ -64,7 +55,7 @@ impl Board {
         self.state = GameState::InPlay;
     }
 
-    pub fn get_legal_moves(&self) -> Vec<usize> {
+    pub fn get_random_move(&mut self) -> usize {
         let mut moves = vec![];
 
         for (index, &value) in self.board.iter().enumerate() {
@@ -73,12 +64,12 @@ impl Board {
             }
         }
 
-        moves
+        *moves.choose(&mut self.rng).unwrap()
     }
 
     fn check_for_win(&mut self) -> MoveResult {
         let board = self.board;
-        
+
         // Diagonal Checks
         if board[0] == board[4] && board[4] == board[8] && board[0] != 2 && board[0] != 0 {
             self.winner = board[0];
@@ -109,16 +100,16 @@ impl Board {
                 self.winner = board[index];
             }
         }
-        
+
         if self.winner != 0 {
-            self.state = GameState::Winner;
-            return MoveResult::PlayerWon(self.winner);
+            self.state = GameState::Completed;
+            return MoveResult::Completed(self.winner);
         }
 
         // If there are no 0's and the board is completely full, it's a draw
         if self.board.iter().any(|&x| x == 0) == false {
-            self.state = GameState::Draw;
-            return MoveResult::Draw;
+            self.state = GameState::Completed;
+            return MoveResult::Completed(2);
         }
 
         MoveResult::Nothing

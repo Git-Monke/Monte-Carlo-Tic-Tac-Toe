@@ -1,19 +1,23 @@
 pub mod ttt;
 
 use ttt::{Board, GameState, GameState::*, MoveResult};
-
-pub struct Move {
-    subboard: usize,
-    index: usize
-}
+use rand::prelude::*;
 
 pub struct StrategicBoard {
     subboards: Vec<Board>,
     board: Board,
+    pub legal_boards: Vec<usize>,
     pub current_board: Option<usize>,
     pub player: i8,
-    move_history: Vec<Move>,
+    move_history: Vec<usize>,
     checkpoint_index: usize,
+    rng: ThreadRng
+}
+
+#[derive(Debug)]
+pub struct Move {
+    subboard: usize,
+    index: usize,
 }
 
 impl StrategicBoard {
@@ -21,10 +25,12 @@ impl StrategicBoard {
         StrategicBoard {
             subboards: (0..9).map(|_| Board::new()).collect(),
             board: Board::new(),
+            legal_boards: (0..9).map(|x| x).collect(),
             current_board: None,
             player: 1,
             move_history: vec![],
-            checkpoint_index: 0
+            checkpoint_index: 0,
+            rng: rand::thread_rng()
         }
     }
 
@@ -40,7 +46,7 @@ impl StrategicBoard {
 
         // Check to make sure the board is in play
         match self.subboards[subboard].state {
-            Winner | Draw => {
+            Completed => {
                 println!("Warning! Tried to play on subboard that has already been completed.");
                 return MoveResult::Nothing;
             }
@@ -55,49 +61,38 @@ impl StrategicBoard {
 
         let result = self.subboards[subboard].make_move(index, self.player);
         self.player = -self.player;
-        self.move_history.push(Move {
-            subboard: subboard,
-            index: index
-        });
-        
+        self.move_history.push(subboard);
+
         self.current_board = match self.subboards[index].state {
-            GameState::Winner | GameState::Draw => None,
+            GameState::Completed => None,
             _ => Some(index),
         };
 
         match result {
-            MoveResult::PlayerWon(p) => self.board.make_move(subboard, p),
-            MoveResult::Draw => self.board.make_move(subboard, 2),
+            MoveResult::Completed(p) => {
+                // Remove the board that is no longer in play from the list of legal boards
+                if let Some(index) = self.legal_boards.iter().position(|&x| x == subboard) {
+                    self.legal_boards.remove(index);
+                }
+                // Update the larger board to track that win, setting it to whoever won or 2 if the game was a draw.
+                self.board.make_move(subboard, p)
+            }
             _ => MoveResult::Nothing,
         }
     }
 
-    pub fn get_legal_moves(&self) -> Vec<Move> {
-        let moves = vec![];
-
-        let subboards = if let Some(n) = self.current_board {
-            vec![n]
-        } else {
-            self.subboards
-                .iter()
-                .enumerate()
-                .filter_map(|(i, board)| if board.state == InPlay { Some(i) } else { None })
-                .collect()
+    pub fn get_random_move(&mut self) -> Move {
+        let subboard = match self.current_board {
+            Some(b) => b,
+            None => *self.legal_boards.choose(&mut self.rng).unwrap()
         };
 
-        for (i, board) in subboards.iter().enumerate() {
-            let current_board = self.current_board.unwrap();
+        let index = self.subboards[subboard].get_random_move();
 
-            let sub_moves = self.subboards[current_board].get_legal_moves();
-            for mov in sub_moves {
-                moves.push(Move {
-                    subboard: current_board,
-                    index: mov
-                })
-            }
+        Move {
+            subboard: subboard,
+            index: index
         }
-
-        moves
     }
 
     pub fn set_checkpoint(&mut self) {
@@ -106,9 +101,16 @@ impl StrategicBoard {
 
     pub fn revert(&mut self) {
         while self.move_history.len() != self.checkpoint_index && self.move_history.len() > 0 {
-            let mov = self.move_history.last().unwrap();
-            self.subboards[mov.subboard].board[mov.index] = 0;
-            self.subboards[mov.subboard].state = GameState::InPlay;
+            let index = *self.move_history.last().unwrap();
+            let subboard = &mut self.subboards[index];
+
+            // When reverting a move, if the board was previously not in play that means it will become in play
+            // This means we can add it to the list of legal boards
+            if subboard.state != GameState::InPlay {
+                self.legal_boards.push(index);
+            }
+
+            subboard.undo_move();
             self.move_history.pop();
         }
     }
