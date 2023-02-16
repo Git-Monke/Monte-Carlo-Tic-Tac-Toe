@@ -1,6 +1,8 @@
 #[allow(dead_code, unused_variables, unused_imports)]
 mod sttt;
 
+use std::time::Instant;
+
 use std::io;
 use sttt::{ttt, StrategicBoard};
 use ttt::{GameState, MoveResult};
@@ -9,7 +11,9 @@ fn read(prompt: &str) -> usize {
     println!("{}", prompt);
 
     let mut input = String::new();
-    io::stdin().read_line(&mut input).expect("Failed to read line");
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read line");
 
     match input.trim().parse::<usize>() {
         Ok(num) if num >= 1 && num <= 9 => num,
@@ -22,6 +26,11 @@ fn read(prompt: &str) -> usize {
 
 fn main() {
     let mut new_board = StrategicBoard::new();
+
+    for _ in 0..100_000 {
+        new_board.set_checkpoint();
+    }
+
     new_board.display();
 
     loop {
@@ -29,26 +38,26 @@ fn main() {
             Some(x) => {
                 println!("Currently on board {}", x + 1);
                 x
-            },
-            None => {
-                read("Subboard (1-9): ") - 1
             }
+            None => read("Subboard (1-9): ") - 1,
         };
         let index = read("Index (1-9): ") - 1;
 
         let result = new_board.make_move(subboard, index);
         new_board.display();
+        println!("{:?}", new_board.get_random_move());
 
         match result {
-            MoveResult::PlayerWon(p) => {
-                println!("Player {} won!", p);
+            MoveResult::Completed(p) => {
+                match p {
+                    1 => println!("Player 1 won!"),
+                    -1 => println!("Player 2 won!"),
+                    2 => println!("Game was a draw"),
+                    _ => unreachable!(),
+                };
                 break;
-            },
-            MoveResult::Draw => {
-                println!("Game was a draw!");
-                break;
-            },
-            MoveResult::Nothing => ()
+            }
+            MoveResult::Nothing => (),
         }
     }
 }
