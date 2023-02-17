@@ -28,7 +28,12 @@ use monte_carlo::*;
 fn main() {
     let mut new_board = StrategicBoard::new();
     let mut new_tree = Tree::new();
-    new_tree.step(&mut new_board);
+    for _ in 0..10 {
+        new_tree.step(&mut new_board);
+    }
+    println!("{:?}", &new_tree.root);
+    println!("{:?}", new_board);
+    
     // new_board.set_checkpoint();
 
     // let now = Instant::now();

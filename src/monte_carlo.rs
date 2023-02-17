@@ -1,12 +1,8 @@
-use crate::sttt::{StrategicBoard, ttt::MoveResult};
+use crate::sttt::{StrategicBoard, Move, ttt::MoveResult};
 use rand::prelude::*;
 
-struct Move {
-    subboard: usize,
-    index: usize
-}
-
-struct Node {
+#[derive(Debug)]
+pub struct Node {
     children: Vec<Node>,
     data: Option<Move>,
     visits: f32,
@@ -14,7 +10,7 @@ struct Node {
 }
 
 pub struct Tree {
-    root: Node,
+    pub root: Node,
     rng: ThreadRng
 }
 
@@ -43,8 +39,12 @@ impl Node {
         best_index
     }
 
-    fn get_best_child(&self) -> &Node {
+    fn get_max_child(&self) -> &Node {
         &self.children.iter().max_by_key(|v| v.value as isize).unwrap()
+    }
+
+    fn get_min_child(&self) -> &Node {
+        &self.children.iter().min_by_key(|v| v.value as isize).unwrap()
     }
 }
 
@@ -59,7 +59,7 @@ impl Tree {
     pub fn step(&mut self, board: &mut StrategicBoard) {
         let mut path = vec![];
         let mut current_node = &mut self.root;
-        let start_checkpoint = board.get_move();
+        board.set_checkpoint();
 
         loop {
             let len = current_node.children.len();
@@ -67,6 +67,7 @@ impl Tree {
             match len {
                 0 => break,
                 _ => {
+                    current_node.visits += 1.0;
                     let index = current_node.best_next_path();
                     current_node = &mut current_node.children[index];
                     
@@ -78,8 +79,9 @@ impl Tree {
             }
         }
 
-        if current_node.value == 0.0 {
+        if current_node.visits == 0.0 {
             let mut rollout_result = 0.0;
+            current_node.visits += 1.0;
 
             loop {
                 let mov = board.get_random_move();
@@ -89,7 +91,7 @@ impl Tree {
                     MoveResult::Completed(p) => {
                         rollout_result = match p {
                             1 | -1 => p as f32,
-                            2 => 0,
+                            2 => 0.0,
                             _ => unreachable!()
                         };
                         break
@@ -97,20 +99,25 @@ impl Tree {
                     _ => ()
                 }
             }
+            
+            let mut current_node = &mut self.root;
+            current_node.value += rollout_result;
 
-            board.revert(start_checkpoint);
+            for index in path.iter() {
+                current_node = &mut current_node.children[*index];
+                current_node.value += rollout_result;
+            }
+        } else {
+            let moves = board.get_legal_moves();
+
+            for mov in moves.iter() {
+                current_node.children.push(Node::new(Some(Move {
+                    subboard: mov.subboard,
+                    index: mov.index
+                })));
+            }
         }
-
         
-
-        // let new_paths = board.get_legal_moves();
-
-        // for path in new_paths.iter() {
-        //     current_node.
-        // }
-        
-
-        board.revert_to_move(start_checkpoint);
-        println!("{:?}", path);
+        board.revert();
     }
 }
