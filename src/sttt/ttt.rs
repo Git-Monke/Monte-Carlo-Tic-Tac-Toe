@@ -35,7 +35,6 @@ impl Board {
     // If player = 2, then that represents a claimed but neutral territory.
     // The purpose of this being to represent draws on bigger boards.
     pub fn make_move(&mut self, index: usize, player: i8) -> MoveResult {
-        println!("{:?}", self);
         if self.winner != 0 {
             self.display();
             panic!("Warning! Tried playing illegal move (Board already has a winner)");

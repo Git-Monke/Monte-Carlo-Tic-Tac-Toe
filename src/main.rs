@@ -29,21 +29,21 @@ fn main() {
     new_board.set_checkpoint();
 
     let now = Instant::now();
-
-    for _ in 0..100 {
+    let count = 100_000;
+    
+    for game in 0..count {
         new_board.revert();
-        new_board.display();
+        
+        if game % 10000 == 0 {
+            println!("{}% of games completed", (game as f32 / count as f32) * 100.0);
+        }
+
         loop {
             let new_move = new_board.get_random_move();
-            new_board.display();
-            println!("\n");
-            println!("{:?}", new_move);
-            println!("{:?}", new_board.subboards);  
-            new_board.subboards[new_move.subboard].display(); 
             let result = new_board.make_move(new_move.subboard, new_move.index);
+
             match result {
                 MoveResult::Completed(p) => {
-                    println!("{}", p);
                     break
                 }
                 _ => ()
@@ -51,7 +51,7 @@ fn main() {
         }
     }
 
-    println!("{:?}", now.elapsed());
+    println!("Was able to compute {:?} games per second", count as f64 / now.elapsed().as_secs_f64());
 
     // loop {
     //     let subboard = match new_board.current_board {

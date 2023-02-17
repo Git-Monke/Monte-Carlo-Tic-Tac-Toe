@@ -108,6 +108,7 @@ impl StrategicBoard {
             // When reverting a move, if the board was previously not in play that means it will become in play
             // This means we can add it to the list of legal boards
             if subboard.state != GameState::InPlay {
+                self.board.undo_move();
                 self.legal_boards.push(index);
             }
 
