@@ -82,6 +82,33 @@ impl StrategicBoard {
         }
     }
 
+    pub fn get_legal_moves(&self) -> Vec<Move> {
+        let mut moves = vec![];
+
+        let subboards = if let Some(n) = self.current_board {
+            vec![n]
+        } else {
+            self.subboards
+                .iter()
+                .enumerate()
+                .filter_map(|(i, board)| if board.state == InPlay { Some(i) } else { None })
+                .collect()
+        };
+
+        for (i, board) in subboards.iter().enumerate() {
+            let sub_moves = self.subboards[*board].get_legal_moves();
+
+            for mov in sub_moves {
+                moves.push(Move {
+                    subboard: *board,
+                    index: mov
+                })
+            }
+        }
+
+        moves
+    }
+
     pub fn get_random_move(&mut self) -> Move {
         let subboard = match self.current_board {
             Some(b) => b,
@@ -96,12 +123,12 @@ impl StrategicBoard {
         }
     }
 
-    pub fn set_checkpoint(&mut self) {
-        self.checkpoint_index = self.move_history.len();
+    pub fn get_move(&mut self) -> usize {
+        self.move_history.len()
     }
 
-    pub fn revert(&mut self) {
-        while self.move_history.len() != self.checkpoint_index && self.move_history.len() >= 0 {
+    pub fn revert_to_move(&mut self, mov: usize) {
+        while self.move_history.len() != mov {
             let index = *self.move_history.last().unwrap();
             let subboard = &mut self.subboards[index];
 

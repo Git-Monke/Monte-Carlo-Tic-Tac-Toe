@@ -36,15 +36,11 @@ impl Board {
     // The purpose of this being to represent draws on bigger boards.
     pub fn make_move(&mut self, index: usize, player: i8) -> MoveResult {
         if self.winner != 0 {
-            self.display();
             panic!("Warning! Tried playing illegal move (Board already has a winner)");
-            return MoveResult::Nothing;
         }
 
         if self.board[index] != 0 {
-            self.display();
             panic!("Warning! Tried playing illegal move (Player has already played at position)");
-            return MoveResult::Nothing;
         }
         
         self.board[index] = player;
@@ -69,6 +65,18 @@ impl Board {
         }
 
         *moves.choose(&mut self.rng).unwrap()
+    }
+
+    pub fn get_legal_moves(&self) -> Vec<usize> {
+        let mut moves = vec![];
+
+        for (index, &value) in self.board.iter().enumerate() {
+            if value == 0 {
+                moves.push(index)
+            }
+        }
+
+        moves
     }
 
     fn check_for_win(&mut self) -> MoveResult {
