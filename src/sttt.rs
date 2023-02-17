@@ -4,14 +4,20 @@ use ttt::{Board, GameState, GameState::*, MoveResult};
 use rand::prelude::*;
 
 #[derive(Debug)]
+struct Checkpoint {
+    player: i8,
+    current_board: Option<usize>,
+    moves: Vec<usize>
+}
+
+#[derive(Debug)]
 pub struct StrategicBoard {
     pub subboards: Vec<Board>,
     board: Board,
     pub legal_boards: Vec<usize>,
     pub current_board: Option<usize>,
     pub player: i8,
-    move_history: Vec<usize>,
-    checkpoint_index: usize,
+    checkpoint: Checkpoint,
     rng: ThreadRng
 }
 
@@ -29,8 +35,11 @@ impl StrategicBoard {
             legal_boards: (0..9).map(|x| x).collect(),
             current_board: None,
             player: 1,
-            move_history: vec![],
-            checkpoint_index: 0,
+            checkpoint: Checkpoint {
+                player: 1,
+                current_board: None,
+                moves: vec![]
+            },
             rng: rand::thread_rng()
         }
     }
@@ -60,9 +69,10 @@ impl StrategicBoard {
             return MoveResult::Nothing;
         }
 
+        self.checkpoint.moves.push(subboard);
+
         let result = self.subboards[subboard].make_move(index, self.player);
         self.player = -self.player;
-        self.move_history.push(subboard);
 
         self.current_board = match self.subboards[index].state {
             GameState::Completed => None,
@@ -123,25 +133,28 @@ impl StrategicBoard {
         }
     }
 
-    pub fn get_move(&mut self) -> usize {
-        self.move_history.len()
+    pub fn set_checkpoint(&mut self) {
+        self.checkpoint.player = self.player;
+        self.checkpoint.current_board = self.current_board.clone();
+        self.checkpoint.moves = vec![];
     }
 
-    pub fn revert_to_move(&mut self, mov: usize) {
-        while self.move_history.len() != mov {
-            let index = *self.move_history.last().unwrap();
-            let subboard = &mut self.subboards[index];
+    pub fn revert(&mut self) {
+        for mov in self.checkpoint.moves.iter() {
+            let subboard = &mut self.subboards[*mov];
 
             // When reverting a move, if the board was previously not in play that means it will become in play
             // This means we can add it to the list of legal boards
             if subboard.state != GameState::InPlay {
                 self.board.undo_move();
-                self.legal_boards.push(index);
+                self.legal_boards.push(*mov);
             }
 
             subboard.undo_move();
-            self.move_history.pop();
         }
+
+        self.player = self.checkpoint.player;
+        self.current_board = self.checkpoint.current_board.clone();
     }
 
     // Horrendous I know... but it works.
