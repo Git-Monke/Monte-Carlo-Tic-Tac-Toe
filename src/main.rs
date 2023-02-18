@@ -1,8 +1,7 @@
 #[allow(unused, unused_imports)]
 pub mod sttt;
-mod monte_carlo;
+pub mod monte_carlo;
 
-use std::time::Instant;
 use std::io;
 use sttt::{ttt, StrategicBoard};
 use ttt::{GameState, MoveResult};
@@ -28,11 +27,56 @@ use monte_carlo::*;
 fn main() {
     let mut new_board = StrategicBoard::new();
     let mut new_tree = Tree::new();
-    for _ in 0..101 {
-        new_tree.step(&mut new_board);
+    let mut depth = 0;
+    let mut nodes = 0;
+
+    // loop {
+    //     let subboard = match new_board.current_board {
+    //         Some(x) => {
+    //             println!("Currently on board {}", x + 1);
+    //             x
+    //         }
+    //         None => read("Subboard (1-9): ") - 1,
+    //     };
+    //     let index = read("Index (1-9): ") - 1;
+
+    //     let result = new_board.make_move(subboard, index);
+    //     new_board.display();
+
+    //     match result {
+    //         MoveResult::Completed(p) => {
+    //             match p {
+    //                 1 => println!("Player 1 won!"),
+    //                 -1 => println!("Player 2 won!"),
+    //                 2 => println!("Game was a draw"),
+    //                 _ => unreachable!(),
+    //             };
+    //             break;
+    //         }
+    //         MoveResult::Nothing => (),
+    //     }
+
+
+    // }
+
+    for i in 0..600_000 {
+        let d = new_tree.step(&mut new_board);
+        nodes += 1;
+        if d > depth {
+            println!("At depth {}", d);
+            println!("{} nodes searched", nodes);
+            depth = d;
+            nodes = 0;
+        }
     }
+
+    for leaf in new_tree.root.children.iter() {
+        println!("{:?}, {}", leaf.data.as_ref().unwrap(), leaf.value);
+    };
+
+    println!("{:?}", new_tree.root.get_max_child().data.as_ref().unwrap());
+    println!("Tree search depth: {}", depth);
     new_board.display();
-    println!("{:?}", &new_tree.root);
     // new_board.set_checkpoint();
     // for _ in 0..40 {
     //     let random_move = new_board.get_random_move();
@@ -85,32 +129,4 @@ fn main() {
     // }
 
     // println!("Was able to compute {:?} games per second", count as f64 / now.elapsed().as_secs_f64());
-
-    // loop {
-    //     let subboard = match new_board.current_board {
-    //         Some(x) => {
-    //             println!("Currently on board {}", x + 1);
-    //             x
-    //         }
-    //         None => read("Subboard (1-9): ") - 1,
-    //     };
-    //     let index = read("Index (1-9): ") - 1;
-
-    //     let result = new_board.make_move(subboard, index);
-    //     new_board.display();
-    //     println!("{:?}", new_board.get_random_move());
-
-    //     match result {
-    //         MoveResult::Completed(p) => {
-    //             match p {
-    //                 1 => println!("Player 1 won!"),
-    //                 -1 => println!("Player 2 won!"),
-    //                 2 => println!("Game was a draw"),
-    //                 _ => unreachable!(),
-    //             };
-    //             break;
-    //         }
-    //         MoveResult::Nothing => (),
-    //     }
-    // }
 }
