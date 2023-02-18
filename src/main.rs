@@ -28,11 +28,36 @@ use monte_carlo::*;
 fn main() {
     let mut new_board = StrategicBoard::new();
     let mut new_tree = Tree::new();
-    for _ in 0..10 {
+    for _ in 0..101 {
         new_tree.step(&mut new_board);
     }
+    new_board.display();
     println!("{:?}", &new_tree.root);
-    println!("{:?}", new_board);
+    // new_board.set_checkpoint();
+    // for _ in 0..40 {
+    //     let random_move = new_board.get_random_move();
+    //     new_board.make_move(random_move.subboard, random_move.index);
+    // }
+    // println!("{:?}, {}", new_board.current_board, new_board.player);
+    // new_board.display();
+    // new_board.set_checkpoint();
+    // for _ in 0..20 {
+    //     let random_move = new_board.get_random_move();
+    //     new_board.make_move(random_move.subboard, random_move.index);
+    // }
+    // println!("{:?}, {}", new_board.current_board, new_board.player);
+    // new_board.display();
+    // new_board.revert();
+    // println!("{:?}, {}", new_board.current_board, new_board.player);
+    // new_board.display();
+
+    // let mut new_tree = Tree::new();
+
+    // for _ in 0..100 {
+    //     new_tree.step(&mut new_board);
+    // }
+
+    // println!("{:?}", new_tree);
     
     // new_board.set_checkpoint();
 

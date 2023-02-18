@@ -36,6 +36,7 @@ impl Board {
     // The purpose of this being to represent draws on bigger boards.
     pub fn make_move(&mut self, index: usize, player: i8) -> MoveResult {
         if self.winner != 0 {
+            self.display();
             panic!("Warning! Tried playing illegal move (Board already has a winner)");
         }
 

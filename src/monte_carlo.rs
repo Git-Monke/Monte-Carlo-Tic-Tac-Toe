@@ -9,6 +9,7 @@ pub struct Node {
     value: f32
 }
 
+#[derive(Debug)]
 pub struct Tree {
     pub root: Node,
     rng: ThreadRng
@@ -78,7 +79,8 @@ impl Tree {
                 }
             }
         }
-
+        board.display();
+        println!("\n");
         if current_node.visits == 0.0 {
             let mut rollout_result = 0.0;
             current_node.visits += 1.0;

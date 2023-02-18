@@ -155,6 +155,7 @@ impl StrategicBoard {
 
         self.player = self.checkpoint.player;
         self.current_board = self.checkpoint.current_board.clone();
+        self.checkpoint.moves = vec![];
     }
 
     // Horrendous I know... but it works.
