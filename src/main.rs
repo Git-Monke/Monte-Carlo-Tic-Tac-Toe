@@ -2,9 +2,10 @@
 pub mod sttt;
 pub mod monte_carlo;
 
+use std::time::{Instant, Duration};
 use std::io;
 use sttt::{ttt, StrategicBoard};
-use ttt::{GameState, MoveResult};
+use ttt::MoveResult;
 use monte_carlo::*;
 
 // fn read(prompt: &str) -> usize {
@@ -26,9 +27,36 @@ use monte_carlo::*;
 
 fn main() {
     let mut new_board = StrategicBoard::new();
-    let mut new_tree = Tree::new();
+    let mut new_tree = Tree::new(-1.0);
     let mut depth = 0;
     let mut nodes = 0;
+    let mut sum = 0.0;
+    let start_time = Instant::now();
+    let end_time = start_time + Duration::from_secs(20);
+
+    while Instant::now() < end_time {
+        let d = new_tree.step(&mut new_board);
+        nodes += 1;
+        if d > depth {
+            println!("At depth {}", d);
+            println!("{} nodes searched", nodes);
+            depth = d;
+            nodes = 0;
+        }
+    }
+    println!("{}", new_tree.root.visits);
+    for leaf in new_tree.root.children.iter() {
+        sum += leaf.value;
+    }
+
+    for leaf in new_tree.root.children.iter() {
+        let mov = leaf.data.as_ref().unwrap();
+        println!("({}, {}): {:.1$}%", mov.subboard + 1, mov.index + 1, ((leaf.value / sum) * 100.0) as u32);
+    };
+
+    println!("{:?}", new_tree.root.get_max_child().data.as_ref().unwrap());
+    println!("Tree search depth: {}", depth);
+    new_board.display();
 
     // loop {
     //     let subboard = match new_board.current_board {
@@ -39,10 +67,8 @@ fn main() {
     //         None => read("Subboard (1-9): ") - 1,
     //     };
     //     let index = read("Index (1-9): ") - 1;
-
     //     let result = new_board.make_move(subboard, index);
     //     new_board.display();
-
     //     match result {
     //         MoveResult::Completed(p) => {
     //             match p {
@@ -55,28 +81,8 @@ fn main() {
     //         }
     //         MoveResult::Nothing => (),
     //     }
-
-
     // }
 
-    for i in 0..600_000 {
-        let d = new_tree.step(&mut new_board);
-        nodes += 1;
-        if d > depth {
-            println!("At depth {}", d);
-            println!("{} nodes searched", nodes);
-            depth = d;
-            nodes = 0;
-        }
-    }
-
-    for leaf in new_tree.root.children.iter() {
-        println!("{:?}, {}", leaf.data.as_ref().unwrap(), leaf.value);
-    };
-
-    println!("{:?}", new_tree.root.get_max_child().data.as_ref().unwrap());
-    println!("Tree search depth: {}", depth);
-    new_board.display();
     // new_board.set_checkpoint();
     // for _ in 0..40 {
     //     let random_move = new_board.get_random_move();

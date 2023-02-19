@@ -1,6 +1,6 @@
 pub mod ttt;
 
-use ttt::{Board, GameState, GameState::*, MoveResult};
+use ttt::{Board, MoveResult};
 use rand::prelude::*;
 
 #[derive(Debug)]
@@ -17,6 +17,8 @@ pub struct StrategicBoard {
     pub legal_boards: Vec<usize>,
     pub current_board: Option<usize>,
     pub player: i8,
+    pub in_play: bool,
+    pub winner: i8,
     checkpoint: Checkpoint,
     rng: ThreadRng
 }
@@ -35,6 +37,8 @@ impl StrategicBoard {
             legal_boards: (0..9).map(|x| x).collect(),
             current_board: None,
             player: 1,
+            in_play: true,
+            winner: 0,
             checkpoint: Checkpoint {
                 player: 1,
                 current_board: None,
@@ -55,15 +59,12 @@ impl StrategicBoard {
         }
 
         // Check to make sure the board is in play
-        match self.subboards[subboard].state {
-            Completed => {
-                println!("Warning! Tried to play on subboard that has already been completed.");
-                return MoveResult::Nothing;
-            }
-            InPlay => (),
+        if self.subboards[subboard].in_play == false {
+            println!("Warning! Tried to play on subboard that has already been completed.");
+            return MoveResult::Nothing;
         }
 
-        // Check to make sure the spot they want to play on  is empty
+        // Check to make sure the spot they want to play on is empty
         if self.subboards[subboard].board[index] != 0 {
             println!("Warning! Tried to play on a spot that has already been played on.");
             return MoveResult::Nothing;
@@ -72,13 +73,14 @@ impl StrategicBoard {
         self.checkpoint.moves.push(subboard);
 
         let result = self.subboards[subboard].make_move(index, self.player);
+
         self.player = -self.player;
 
-        self.current_board = match self.subboards[index].state {
-            GameState::Completed => None,
+        self.current_board = match self.subboards[index].in_play {
+            false => None,
             _ => Some(index),
         };
-
+        
         match result {
             MoveResult::Completed(p) => {
                 // Remove the board that is no longer in play from the list of legal boards
@@ -86,7 +88,19 @@ impl StrategicBoard {
                     self.legal_boards.remove(index);
                 }
                 // Update the larger board to track that win, setting it to whoever won or 2 if the game was a draw.
-                self.board.make_move(subboard, p)
+                let result = self.board.make_move(subboard, p);
+
+                match result {
+                    MoveResult::Completed(p) => {
+                        self.in_play = false;
+                        self.winner = p;
+                    },
+                    _ => ()
+                };
+                result
+            },
+            MoveResult::Error => {
+                panic!("Error was encountered");
             },
             _ => MoveResult::Nothing
         }
@@ -101,7 +115,7 @@ impl StrategicBoard {
             self.subboards
                 .iter()
                 .enumerate()
-                .filter_map(|(i, board)| if board.state == InPlay { Some(i) } else { None })
+                .filter_map(|(i, board)| if board.in_play == true { Some(i) } else { None })
                 .collect()
         };
 
@@ -145,7 +159,7 @@ impl StrategicBoard {
 
             // When reverting a move, if the board was previously not in play that means it will become in play
             // This means we can add it to the list of legal boards
-            if subboard.state != GameState::InPlay {
+            if subboard.in_play == false {
                 self.board.undo_move();
                 self.legal_boards.push(*mov);
             }
@@ -155,6 +169,8 @@ impl StrategicBoard {
 
         self.player = self.checkpoint.player;
         self.current_board = self.checkpoint.current_board.clone();
+        self.winner = 0;
+        self.in_play = true;
         self.checkpoint.moves = vec![];
     }
 

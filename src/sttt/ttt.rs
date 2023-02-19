@@ -3,20 +3,15 @@ use rand::prelude::*;
 #[derive(Debug, PartialEq)]
 pub enum MoveResult {
     Completed(i8),
+    Error,
     Nothing
-}
-
-#[derive(Debug, PartialEq)]
-pub enum GameState {
-    Completed,
-    InPlay,
 }
 
 #[derive(Debug)]
 pub struct Board {
     pub board: [i8; 9],
     pub winner: i8,
-    pub state: GameState,
+    pub in_play: bool,
     pub move_history: Vec<usize>,
     rng: ThreadRng
 }
@@ -26,7 +21,7 @@ impl Board {
         Board {
             board: [0; 9],
             winner: 0,
-            state: GameState::InPlay,
+            in_play: true,
             move_history: vec![],
             rng: rand::thread_rng()
         }
@@ -35,25 +30,33 @@ impl Board {
     // If player = 2, then that represents a claimed but neutral territory.
     // The purpose of this being to represent draws on bigger boards.
     pub fn make_move(&mut self, index: usize, player: i8) -> MoveResult {
-        if self.winner != 0 {
-            self.display();
-            panic!("Warning! Tried playing illegal move (Board already has a winner)");
-        }
+        let mut result = MoveResult::Nothing;
 
-        if self.board[index] != 0 {
-            panic!("Warning! Tried playing illegal move (Player has already played at position)");
+        if self.winner != 0 || self.board[index] != 0 {
+            self.display();
+            println!("Warning! Tried playing illegal move");
+            result = MoveResult::Error;
+        } else {
+            self.board[index] = player;
+            self.move_history.push(index);
+            result = self.check_for_win();
         }
         
-        self.board[index] = player;
-        self.move_history.push(index);
-        self.check_for_win()
+        // match result {
+        //     MoveResult::Error => {
+        //         panic!("Error was encountered");
+        //     },
+        //     _ => ()
+        // }
+
+        result
     }
 
     pub fn undo_move(&mut self) {
         self.board[*self.move_history.last().unwrap()] = 0;
         self.winner = 0;
         self.move_history.pop();
-        self.state = GameState::InPlay;
+        self.in_play = true;
     }
 
     pub fn get_random_move(&mut self) -> usize {
@@ -115,13 +118,13 @@ impl Board {
         }
 
         if self.winner != 0 {
-            self.state = GameState::Completed;
+            self.in_play = false;
             return MoveResult::Completed(self.winner);
         }
 
         // If there are no 0's and the board is completely full, it's a draw
         if self.board.iter().any(|&x| x == 0) == false {
-            self.state = GameState::Completed;
+            self.in_play = false;
             return MoveResult::Completed(2);
         }
 
